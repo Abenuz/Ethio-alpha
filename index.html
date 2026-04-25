@@ -1,435 +1,318 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethio-Alpha | Enterprise Security Solutions</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-        
-        :root {
-            --brand-primary: #3b82f6;
-            --brand-dark: #0f172a;
-            --brand-accent: #10b981;
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithCustomToken, 
+  signInAnonymously, 
+  onAuthStateChanged, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  query, 
+  doc, 
+  deleteDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { 
+  LogIn, 
+  LogOut, 
+  ShieldCheck, 
+  User, 
+  StickyNote, 
+  Trash2, 
+  Loader2, 
+  Globe,
+  Lock,
+  AlertCircle,
+  X
+} from 'lucide-react';
+
+// --- Firebase Configuration ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'auth-demo-app';
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  // --- Auth Logic (Rule 3) ---
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
         }
+      } catch (err) {
+        console.error("Auth token initialization error:", err);
+      }
+    };
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; 
-            color: #1e293b;
-            overflow-x: hidden;
-        }
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
 
-        .mono { font-family: 'JetBrains Mono', monospace; }
+    return () => unsubscribe();
+  }, []);
 
-        .admin-panel {
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+  // --- Data Fetching (Rule 1 & 2) ---
+  useEffect(() => {
+    if (!user) {
+      setNotes([]);
+      return;
+    }
 
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
+    const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+    
+    const unsubscribe = onSnapshot(notesRef, (snapshot) => {
+      const notesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setNotes(notesData);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+    });
 
-        .dark-mode {
-            background-color: #020617;
-            color: #f1f5f9;
-        }
+    return () => unsubscribe();
+  }, [user]);
 
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Google Login failed:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setErrorMessage("Domain restricted! Use 'Quick Access' below to test features without whitelisting.");
+      } else {
+        setErrorMessage(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
+  const handleQuickAccess = async () => {
+    setLoading(true);
+    try {
+      await signInAnonymously(auth);
+    } catch (error) {
+      setErrorMessage("Guest login failed: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        /* Loading Animation */
-        .shimmer {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-    </style>
-</head>
-<body class="bg-slate-50">
+  const addNote = async (e) => {
+    e.preventDefault();
+    if (!newNote.trim() || !user) return;
 
-    <!-- Header / Navigation -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div class="container mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center space-x-3 group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                    <i class="fa-solid fa-shield-virus text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-none">Ethio-Alpha</h1>
-                    <span class="text-[10px] font-bold text-blue-600 tracking-widest uppercase">Security Systems</span>
-                </div>
+    setIsSaving(true);
+    try {
+      const notesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+      await addDoc(notesRef, {
+        text: newNote,
+        createdAt: serverTimestamp()
+      });
+      setNewNote('');
+    } catch (err) {
+      setErrorMessage("Storage error: " + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteNote = async (noteId) => {
+    if (!user) return;
+    try {
+      const noteDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', noteId);
+      await deleteDoc(noteDoc);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+        <p className="text-slate-400 font-medium animate-pulse">Authenticating...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500/30 flex flex-col">
+      {/* Error Toast */}
+      {errorMessage && (
+        <div className="fixed top-20 right-6 left-6 md:left-auto md:w-96 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-xl p-4 rounded-2xl flex items-start gap-3 shadow-2xl shadow-red-500/10">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-red-500 font-bold text-sm">Auth Error</h4>
+              <p className="text-xs text-red-200/70 mt-1 leading-relaxed">{errorMessage}</p>
             </div>
-            
-            <div class="hidden md:flex items-center space-x-10 text-sm font-medium text-slate-600">
-                <a href="#shop" class="hover:text-blue-600 transition">Solutions</a>
-                <a href="#about" class="hover:text-blue-600 transition">About</a>
-                <button onclick="toggleAdminLogin()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition flex items-center space-x-2">
-                    <i class="fa-solid fa-lock"></i>
-                    <span>Admin Portal</span>
-                </button>
-                <button onclick="toggleCart()" class="relative p-2 text-slate-700 hover:text-blue-600">
-                    <i class="fa-solid fa-bag-shopping text-xl"></i>
-                    <span id="cart-count" class="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white font-bold">0</span>
-                </button>
-            </div>
+            <button onClick={() => setErrorMessage(null)} className="text-red-500/50 hover:text-red-500">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-    </nav>
+      )}
 
-    <!-- Hero -->
-    <section class="pt-40 pb-24 bg-white border-b border-slate-100">
-        <div class="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full mb-6 tracking-wide">ENTERPRISE-GRADE PROTECTION</span>
-                <h2 class="text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
-                    Advanced Security <br>For Modern Infrastructure.
-                </h2>
-                <p class="text-slate-500 text-lg mb-8 max-w-md">
-                    The trusted marketplace for professional penetration testing hardware and secure encryption devices in East Africa.
-                </p>
-                <div class="flex space-x-4">
-                    <a href="#shop" class="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold shadow-xl shadow-blue-100 hover:bg-blue-700 transition">
-                        Browse Solutions
-                    </a>
-                    <button onclick="showSpecialNote()" class="px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-blue-400 transition">
-                        System Integrity
-                    </button>
-                </div>
+      {/* Navigation */}
+      <nav className="border-b border-white/10 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="text-blue-500 w-8 h-8" />
+            <span className="text-xl font-bold tracking-tight">SecureCloud</span>
+          </div>
+          
+          {user ? (
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-sm font-medium">{user.displayName || (user.isAnonymous ? 'Guest User' : 'Auth User')}</span>
+                <span className="text-[10px] text-slate-500 uppercase tracking-widest">{user.isAnonymous ? 'Anonymous' : 'Verified'}</span>
+              </div>
+              <img 
+                src={user.photoURL || `https://ui-avatars.com/api/?name=Guest&background=1e293b&color=fff`} 
+                alt="Profile" 
+                className="w-10 h-10 rounded-full border border-white/20"
+              />
+              <button 
+                onClick={handleLogout}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-red-400"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
-            <div class="relative">
-                <div class="absolute -top-10 -left-10 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-                <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-                <div class="relative bg-slate-900 rounded-3xl p-8 shadow-2xl overflow-hidden border border-slate-800">
-                    <div class="flex items-center space-x-2 mb-6 border-b border-slate-800 pb-4">
-                        <div class="w-3 h-3 rounded-full bg-slate-700"></div>
-                        <div class="w-3 h-3 rounded-full bg-slate-700"></div>
-                        <div class="w-3 h-3 rounded-full bg-slate-700"></div>
-                    </div>
-                    <div class="mono text-blue-400 text-sm space-y-3">
-                        <p class="text-slate-500">// System status: Operational</p>
-                        <p># Fetching Lead Security Architect...</p>
-                        <p class="text-emerald-400">$ whois_expert</p>
-                        <p class="text-white text-lg font-bold">Expert: Abenezer Zerihun</p>
-                        <p class="text-slate-500">_ Location: Addis Ababa, Ethiopia</p>
-                        <div class="h-1 bg-slate-800 w-full rounded mt-4 overflow-hidden">
-                            <div class="bg-blue-500 h-full w-[85%] animate-pulse"></div>
-                        </div>
-                    </div>
-                </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleGoogleLogin}
+                className="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-full font-semibold transition-all shadow-lg shadow-blue-600/20"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </button>
             </div>
+          )}
         </div>
-    </section>
+      </nav>
 
-    <!-- Product Grid -->
-    <main id="shop" class="container mx-auto px-6 py-24">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div>
-                <h3 class="text-3xl font-bold text-slate-900 mb-2">Hardware Solutions</h3>
-                <p class="text-slate-500">Select professional tools for verified security environments.</p>
+      <main className="max-w-6xl mx-auto px-6 py-12 flex-grow w-full">
+        {!user ? (
+          <div className="flex flex-col items-center text-center space-y-8 py-10 md:py-20">
+            <div className="space-y-4">
+              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">
+                Stable Auth for <br />Ethiopia's Best
+              </h1>
+              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                Securely store your sensitive data with state-of-the-art cloud technology.
+              </p>
             </div>
-            <div class="flex bg-slate-200/50 p-1 rounded-lg">
-                <button class="px-6 py-2 bg-white rounded-md shadow-sm text-sm font-bold text-slate-900">All Tools</button>
-                <button class="px-6 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition">Encryption</button>
-                <button class="px-6 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition">Network</button>
+
+            <div className="flex flex-col items-center gap-4 mt-8">
+              <button 
+                onClick={handleGoogleLogin}
+                className="group flex items-center gap-4 bg-white text-black px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl w-full sm:w-auto justify-center"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
+                Sign in with Google
+              </button>
+              
+              <button 
+                onClick={handleQuickAccess}
+                className="text-slate-400 hover:text-white transition-colors text-sm font-medium underline underline-offset-4"
+              >
+                Quick Access (No Domain Restriction)
+              </button>
             </div>
-        </div>
+          </div>
+        ) : (
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <header className="bg-gradient-to-r from-blue-600/20 to-transparent p-8 rounded-3xl border border-blue-500/20 flex flex-col md:flex-row items-center gap-6">
+              <img 
+                src={user.photoURL || `https://ui-avatars.com/api/?name=Guest&background=3b82f6&color=fff&size=128`} 
+                alt="Profile" 
+                className="w-24 h-24 rounded-full border-4 border-blue-500/30 shadow-2xl shadow-blue-500/20"
+              />
+              <div className="text-center md:text-left space-y-1">
+                <h2 className="text-3xl font-bold">Hello, {user.displayName || 'Guest User'}!</h2>
+                <p className="text-slate-400 text-sm">Vault ID: <code className="text-blue-400 text-xs bg-blue-400/10 px-2 py-0.5 rounded ml-1">{user.uid}</code></p>
+              </div>
+            </header>
 
-        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            <!-- Products injected by JS -->
-        </div>
-    </main>
-
-    <!-- Admin Access Modal -->
-    <div id="admin-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 hidden">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleAdminLogin()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div class="p-8">
-                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-6 mx-auto shadow-lg shadow-blue-200">
-                    <i class="fa-solid fa-key text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-center text-slate-900 mb-2">Internal Access</h2>
-                <p class="text-slate-500 text-center mb-8 text-sm">Enter administrative credentials to proceed.</p>
-                
-                <form id="loginForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Admin Identity</label>
-                        <input type="text" id="adminUser" placeholder="Username" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Security Token</label>
-                        <input type="password" id="adminPass" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
-                    </div>
-                    <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition">
-                        Validate Credentials
-                    </button>
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <form onSubmit={addNote} className="flex gap-3">
+                  <input 
+                    type="text" 
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Enter a secret note to save in the cloud..."
+                    className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600"
+                  />
+                  <button 
+                    disabled={isSaving}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 px-6 py-3 rounded-xl font-bold transition-colors"
+                  >
+                    Protect
+                  </button>
                 </form>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {notes.map((note) => (
+                    <div key={note.id} className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 group relative backdrop-blur-sm">
+                      <p className="text-slate-200 pr-8 leading-relaxed">{note.text}</p>
+                      <button 
+                        onClick={() => deleteNote(note.id)}
+                        className="absolute top-4 right-4 text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t border-white/5 py-10 px-6 bg-slate-950/80 mt-auto">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-slate-500">
+          <p>© 2024 Built with Google Firebase.</p>
+          <div className="flex items-center gap-4">
+            <span className="font-medium text-slate-400 text-base">Best Hacker in Ethiopia: </span>
+            <span className="text-blue-500 font-bold px-4 py-1 bg-blue-500/10 rounded-xl border border-blue-500/20 text-lg">abenuz</span>
+          </div>
         </div>
+      </footer>
     </div>
-
-    <!-- Real Admin Dashboard (Hidden initially) -->
-    <div id="admin-dashboard" class="fixed inset-0 z-[110] bg-slate-50 hidden overflow-y-auto">
-        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                    <i class="fa-solid fa-terminal text-sm"></i>
-                </div>
-                <span class="font-bold text-slate-900 tracking-tight">Alpha Admin Terminal</span>
-            </div>
-            <button onclick="logoutAdmin()" class="text-sm font-bold text-red-600 hover:text-red-700">Disconnect Session</button>
-        </nav>
-        <div class="container mx-auto p-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Sales</p>
-                    <h4 class="text-3xl font-extrabold text-slate-900">482,000 ETB</h4>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Active Assets</p>
-                    <h4 class="text-3xl font-extrabold text-slate-900">124 Units</h4>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Lead Architect</p>
-                    <h4 class="text-3xl font-extrabold text-blue-600">Abenezer Z.</h4>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-900">Inventory Management</h3>
-                    <button class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition">Add New Entry</button>
-                </div>
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                        <tr>
-                            <th class="px-6 py-4">Hardware Item</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Price</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body">
-                        <!-- Admin items injected by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cart Overlay -->
-    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[70] bg-white shadow-2xl transform translate-x-full transition-transform duration-500 ease-in-out flex flex-col">
-        <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-slate-900">Deployment Queue</h3>
-            <button onclick="toggleCart()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div id="cart-content" class="flex-grow overflow-y-auto p-8 space-y-6">
-            <!-- Cart items -->
-        </div>
-        <div class="p-8 border-t border-slate-100 bg-slate-50">
-            <div class="flex justify-between items-center mb-8">
-                <span class="text-slate-500 font-medium">Subtotal Investment</span>
-                <span id="cart-total-value" class="text-2xl font-extrabold text-slate-900">0 ETB</span>
-            </div>
-            <button onclick="checkout()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-xl shadow-blue-100 hover:bg-blue-700 transition">
-                Confirm & Secure Asset
-            </button>
-        </div>
-    </div>
-
-    <footer class="bg-slate-900 text-slate-400 py-20 px-6">
-        <div class="container mx-auto grid md:grid-cols-4 gap-12">
-            <div class="col-span-2">
-                <h2 class="text-white text-2xl font-bold mb-6">Ethio-Alpha <span class="text-blue-500">Security</span></h2>
-                <p class="max-w-xs text-sm leading-relaxed mb-8">
-                    Providing high-security solutions and verified penetration hardware to the Ethiopian IT ecosystem since 2022.
-                </p>
-                <div class="flex space-x-4">
-                    <div class="w-10 h-10 border border-slate-800 flex items-center justify-center rounded-lg hover:border-blue-500 cursor-pointer transition"><i class="fa-brands fa-linkedin-in"></i></div>
-                    <div class="w-10 h-10 border border-slate-800 flex items-center justify-center rounded-lg hover:border-blue-500 cursor-pointer transition"><i class="fa-brands fa-github"></i></div>
-                </div>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-6">Navigation</h4>
-                <ul class="space-y-4 text-sm">
-                    <li><a href="#" class="hover:text-blue-500 transition">Solutions Hub</a></li>
-                    <li><a href="#" class="hover:text-blue-500 transition">Network Gear</a></li>
-                    <li><a href="#" class="hover:text-blue-500 transition">HID Injection</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-white font-bold mb-6">Contact</h4>
-                <p class="text-sm mb-4">Lead: Abenezer Zerihun</p>
-                <p class="text-sm">Headquarters: Addis Ababa, ET</p>
-                <p class="text-xs text-slate-600 mt-6 mono">V_2.4 Stable Build</p>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        const storeProducts = [
-            { id: 1, name: "Alpha Security Key Gen 4", price: 4500, category: "Auth", description: "Hardware-based MFA for enterprise accounts.", img: "https://images.unsplash.com/photo-1633265486064-086b21935fec?q=80&w=600" },
-            { id: 2, name: "Network Auditing Device", price: 15800, category: "Network", description: "Professional wireless auditing tool for IT security teams.", img: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=600" },
-            { id: 3, name: "USB Rubber Ducky (Ethio Special)", price: 4900, category: "HID", description: "Standard keyboard injection device for verified testing.", img: "https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600" },
-            { id: 4, name: "Faraday Pro Shield", price: 2100, category: "Privacy", description: "Blocks all electromagnetic signals instantly.", img: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=600" },
-            { id: 5, name: "Proxmark3 RDV4 Kit", price: 22000, category: "NFC", description: "Industry standard RFID/NFC research tool.", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600" },
-            { id: 6, name: "Encrypted Hardware Wallet", price: 9200, category: "Storage", description: "Secure cold storage for digital assets.", img: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?q=80&w=600" },
-            { id: 7, name: "OM.G Cable (Official)", price: 6500, category: "HID", description: "A cable that looks like a normal USB cable but isn't.", img: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=600" },
-            { id: 8, name: "Alpha WiFi Booster Pro", price: 11000, category: "Network", description: "High-power adapter for range extensions.", img: "https://images.unsplash.com/photo-1616070829624-88405ad06e2c?q=80&w=600" }
-        ];
-
-        let cart = [];
-
-        function renderProducts() {
-            const container = document.getElementById('product-list');
-            container.innerHTML = storeProducts.map(p => `
-                <div class="product-card bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                    <div class="h-56 bg-slate-100 relative overflow-hidden group">
-                        <img src="${p.img}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                        <div class="absolute top-4 left-4">
-                            <span class="px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold text-slate-900 rounded-md shadow-sm border border-slate-200 uppercase tracking-tighter">${p.category}</span>
-                        </div>
-                    </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h4 class="text-lg font-bold text-slate-900 mb-2 leading-tight">${p.name}</h4>
-                        <p class="text-slate-500 text-xs mb-6 flex-grow">${p.description}</p>
-                        <div class="flex justify-between items-center mt-auto">
-                            <span class="text-xl font-extrabold text-blue-600 mono">${p.price.toLocaleString()} <span class="text-xs">ETB</span></span>
-                            <button onclick="addToCart(${p.id})" class="w-10 h-10 bg-slate-900 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center">
-                                <i class="fa-solid fa-plus text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function addToCart(id) {
-            const product = storeProducts.find(p => p.id === id);
-            cart.push({...product});
-            updateUI();
-            
-            // Visual feedback
-            const cartBtn = document.querySelector('button onclick="toggleCart()"');
-            // Normally I'd use a toast, but keeping it simple:
-            console.log(`Added ${product.name} to cart.`);
-        }
-
-        function updateUI() {
-            document.getElementById('cart-count').innerText = cart.length;
-            const content = document.getElementById('cart-content');
-            
-            if(cart.length === 0) {
-                content.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-center opacity-40">
-                        <i class="fa-solid fa-box-open text-5xl mb-4"></i>
-                        <p class="text-sm font-medium">Your queue is empty.</p>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = cart.map((item, idx) => `
-                    <div class="flex items-center space-x-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <img src="${item.img}" class="w-16 h-16 object-cover rounded-lg">
-                        <div class="flex-grow">
-                            <h5 class="text-sm font-bold text-slate-900">${item.name}</h5>
-                            <p class="text-xs text-blue-600 font-bold mono">${item.price.toLocaleString()} ETB</p>
-                        </div>
-                        <button onclick="removeFromCart(${idx})" class="text-slate-300 hover:text-red-500 transition">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `).join('');
-            }
-            
-            const total = cart.reduce((acc, curr) => acc + curr.price, 0);
-            document.getElementById('cart-total-value').innerText = total.toLocaleString() + " ETB";
-        }
-
-        function removeFromCart(idx) {
-            cart.splice(idx, 1);
-            updateUI();
-        }
-
-        function toggleCart() {
-            document.getElementById('cart-sidebar').classList.toggle('translate-x-full');
-        }
-
-        function toggleAdminLogin() {
-            document.getElementById('admin-modal').classList.toggle('hidden');
-        }
-
-        // Admin Auth
-        document.getElementById('loginForm').onsubmit = (e) => {
-            e.preventDefault();
-            const user = document.getElementById('adminUser').value;
-            const pass = document.getElementById('adminPass').value;
-
-            // Admin Access Logic
-            // The best hacker in Ethiopia check
-            if((user.toLowerCase() === "abenezer" || user.toLowerCase() === "abenezer zerihun") && pass === "root") {
-                document.getElementById('admin-modal').classList.add('hidden');
-                document.getElementById('admin-dashboard').classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-                renderAdminTable();
-            } else {
-                alert("ACCESS DENIED: Credentials not verified by Alpha-Security protocol.");
-            }
-        };
-
-        function logoutAdmin() {
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        function renderAdminTable() {
-            const body = document.getElementById('admin-table-body');
-            body.innerHTML = storeProducts.map(p => `
-                <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded bg-slate-200 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover"></div>
-                            <span class="text-xs font-bold text-slate-700">${p.name}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-bold rounded-full">IN STOCK</span></td>
-                    <td class="px-6 py-4 text-xs font-bold mono text-slate-900">${p.price.toLocaleString()} ETB</td>
-                    <td class="px-6 py-4 text-right">
-                        <button class="text-blue-600 hover:underline text-xs font-bold mr-4">Edit</button>
-                        <button class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function showSpecialNote() {
-            alert("System Integrator: Abenezer Zerihun\nStatus: Secure\nRegion: Ethiopia Alpha Node-01");
-        }
-
-        function checkout() {
-            if(cart.length === 0) return alert("Select at least one asset.");
-            alert("SECURE ORDER CONFIRMED\n\nYour deployment request has been logged. Our logistics team (supervised by Abenezer Zerihun) will contact you shortly.");
-            cart = [];
-            updateUI();
-            toggleCart();
-        }
-
-        window.onload = renderProducts;
-    </script>
-</body>
-</html>
+  );
+}
