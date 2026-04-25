@@ -3,322 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethio-Alpha Hub | Premium Tech Solutions</title>
+    <title>Ethio-Alpha | Security Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
         
         :root {
             --primary: #0ea5e9;
-            --secondary: #6366f1;
+            --dark: #020617;
+            --accent: #22c55e;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: var(--dark); 
+            color: #f1f5f9;
             scroll-behavior: smooth;
         }
 
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
 
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hover-card:hover {
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .nav-link::after {
-            content: '';
-            display: block;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width .3s;
-        }
-        .nav-link:hover::after {
+        .scanline {
             width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(14, 165, 233, 0.1) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 6s linear infinite;
         }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+
+        .cyber-border {
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            position: relative;
+        }
+
+        .cyber-border::after {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 10px; height: 10px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+        }
+
+        .cart-sidebar { 
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        .glow-button:hover {
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100">
+<body>
 
     <!-- Navigation -->
-    <nav class="fixed w-full z-50 glass-morphism py-4">
-        <div class="container mx-auto px-6 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <div class="w-10 h-10 bg-sky-500 rounded-lg flex items-center justify-center font-bold text-2xl">A</div>
-                <span class="text-xl font-bold tracking-tight">Ethio-Alpha <span class="text-sky-500">Hub</span></span>
+    <nav class="fixed w-full z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-sky-600 rounded flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(14,165,233,0.5)]">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tighter uppercase mono">Ethio<span class="text-sky-500">Alpha</span></h1>
             </div>
-            <div class="hidden md:flex space-x-8 items-center">
-                <a href="#services" class="nav-link text-sm font-medium">Services</a>
-                <a href="#solutions" class="nav-link text-sm font-medium">Solutions</a>
-                <a href="#pricing" class="nav-link text-sm font-medium">Pricing</a>
-                <a href="#faq" class="nav-link text-sm font-medium">FAQ</a>
-                <a href="#contact" class="bg-sky-600 hover:bg-sky-500 px-6 py-2 rounded-full text-sm font-bold transition duration-300">Start Project</a>
+            
+            <div class="flex items-center space-x-8">
+                <div class="hidden md:flex space-x-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+                    <a href="#" class="hover:text-sky-400 transition">Terminal</a>
+                    <a href="#shop" class="hover:text-sky-400 transition">Hardware</a>
+                    <a href="#" onclick="showHackerModal()" class="hover:text-sky-400 transition text-emerald-400">Hall of Fame</a>
+                </div>
+                <button onclick="toggleCart()" class="relative p-2 text-slate-300 hover:text-sky-400 transition">
+                    <i class="fa-solid fa-microchip text-xl"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-sky-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-900">0</span>
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="pt-32 pb-20 px-6">
-        <div class="container mx-auto text-center">
-            <div class="inline-block px-4 py-1 border border-sky-500/30 rounded-full bg-sky-500/10 text-sky-400 text-xs font-bold uppercase tracking-widest mb-6">
-                Leading Tech Excellence in Ethiopia
-            </div>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-                Secure. Innovate. <br><span class="gradient-text">Dominate the Digital.</span>
-            </h1>
-            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10">
-                Ethio-Alpha Hub provides world-class cybersecurity, custom software development, and digital transformation for businesses looking to scale securely.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <button class="bg-sky-600 hover:bg-sky-500 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-sky-500/20 transition-all">Get a Free Consultation</button>
-                <button class="glass-morphism hover:bg-white/10 px-8 py-4 rounded-xl font-bold text-lg transition-all border border-white/20">View Case Studies</button>
-            </div>
-            <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 opacity-50 grayscale">
-                <div class="flex justify-center items-center font-bold text-xl">TRUSTED BY</div>
-                <div class="flex justify-center items-center">PARTNER A</div>
-                <div class="flex justify-center items-center">TECH-CORP</div>
-                <div class="flex justify-center items-center">INNOVATE.ET</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Services Section -->
-    <section id="services" class="py-24 bg-slate-900/50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Our Expertise</h2>
-                <p class="text-slate-400">Comprehensive technology solutions tailored to your business needs.</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="p-8 rounded-3xl glass-morphism hover-card">
-                    <div class="w-14 h-14 bg-sky-500/20 rounded-2xl flex items-center justify-center text-sky-400 text-2xl mb-6">
-                        <i class="fas fa-shield-alt"></i>
+    <header class="relative pt-32 pb-20 px-6 overflow-hidden">
+        <div class="scanline"></div>
+        <div class="container mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="z-10">
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-6">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>System Status: Online</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Cybersecurity</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">Advanced penetration testing, threat monitoring, and infrastructure hardening to keep your data untouchable.</p>
-                </div>
-                <div class="p-8 rounded-3xl glass-morphism hover-card border-t-2 border-sky-500">
-                    <div class="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 text-2xl mb-6">
-                        <i class="fas fa-code"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-4">Software Dev</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">Custom enterprise applications, mobile platforms, and web ecosystems built with the latest high-performance tech stacks.</p>
-                </div>
-                <div class="p-8 rounded-3xl glass-morphism hover-card">
-                    <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 text-2xl mb-6">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-4">Digital Strategy</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">Consulting on cloud migration, AI integration, and workflow optimization to increase your business efficiency.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Business Pricing Section -->
-    <section id="pricing" class="py-24">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Transparent Pricing</h2>
-                <p class="text-slate-400">Scalable plans for startups and large enterprises.</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="p-8 rounded-3xl glass-morphism border border-white/5 flex flex-col h-full">
-                    <div class="mb-8">
-                        <h3 class="text-lg font-bold">Standard</h3>
-                        <div class="text-4xl font-extrabold mt-4">$299<span class="text-sm font-normal text-slate-500">/mo</span></div>
-                    </div>
-                    <ul class="space-y-4 mb-8 flex-grow">
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-sky-500 mr-2"></i> Security Audit</li>
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-sky-500 mr-2"></i> Basic Support</li>
-                        <li class="flex items-center text-sm text-slate-500"><i class="fas fa-times mr-2"></i> Dedicated Manager</li>
-                    </ul>
-                    <button class="w-full py-3 rounded-xl border border-sky-500/30 hover:bg-sky-500/10 transition-colors">Select Plan</button>
-                </div>
-                <div class="p-8 rounded-3xl bg-sky-600 shadow-2xl shadow-sky-600/20 flex flex-col h-full transform scale-105">
-                    <div class="mb-8">
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase mb-4 inline-block">Popular Choice</span>
-                        <h3 class="text-lg font-bold">Business Pro</h3>
-                        <div class="text-4xl font-extrabold mt-4">$799<span class="text-sm font-normal text-white/70">/mo</span></div>
-                    </div>
-                    <ul class="space-y-4 mb-8 flex-grow">
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-white mr-2"></i> Full Network Security</li>
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-white mr-2"></i> 24/7 Incident Response</li>
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-white mr-2"></i> Cloud Hosting Integration</li>
-                    </ul>
-                    <button class="w-full py-3 rounded-xl bg-white text-sky-600 font-bold hover:bg-slate-100 transition-colors">Get Started Now</button>
-                </div>
-                <div class="p-8 rounded-3xl glass-morphism border border-white/5 flex flex-col h-full">
-                    <div class="mb-8">
-                        <h3 class="text-lg font-bold">Enterprise</h3>
-                        <div class="text-4xl font-extrabold mt-4">Custom</div>
-                    </div>
-                    <ul class="space-y-4 mb-8 flex-grow">
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-sky-500 mr-2"></i> Unlimited Infrastructure</li>
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-sky-500 mr-2"></i> White-Label Support</li>
-                        <li class="flex items-center text-sm"><i class="fas fa-check text-sky-500 mr-2"></i> Custom App Development</li>
-                    </ul>
-                    <button class="w-full py-3 rounded-xl border border-sky-500/30 hover:bg-sky-500/10 transition-colors">Contact Us</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ / Knowledge Base (with personalized answer) -->
-    <section id="faq" class="py-24 bg-slate-900/50">
-        <div class="container mx-auto px-6 max-w-3xl">
-            <h2 class="text-3xl font-bold mb-12 text-center">Frequently Asked Questions</h2>
-            <div class="space-y-4">
-                <div class="glass-morphism p-6 rounded-2xl">
-                    <button onclick="toggleFaq(1)" class="w-full flex justify-between items-center font-bold">
-                        <span>How long does a security audit take?</span>
-                        <i id="icon-1" class="fas fa-plus transition-transform"></i>
-                    </button>
-                    <div id="faq-1" class="hidden mt-4 text-slate-400 text-sm">
-                        Our standard audit takes between 3 to 7 business days depending on your infrastructure size.
+                    <h2 class="text-5xl md:text-7xl font-bold leading-tight mb-6">
+                        Secure Your <br><span class="text-sky-500">Digital Fortress</span>
+                    </h2>
+                    <p class="text-slate-400 text-lg mb-8 max-w-lg leading-relaxed">
+                        The ultimate source for professional cybersecurity gear, ethical hacking tools, and hardware encryption in Ethiopia.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#shop" class="glow-button bg-sky-600 hover:bg-sky-500 text-white px-8 py-4 rounded font-bold transition flex items-center space-x-3">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>EQUIP GEAR</span>
+                        </a>
+                        <button onclick="showHackerModal()" class="px-8 py-4 rounded font-bold border border-slate-700 hover:border-sky-500/50 hover:bg-sky-500/5 transition mono text-sm">
+                            $ whoami
+                        </button>
                     </div>
                 </div>
-                <!-- THE PERSONALIZED EASTER EGG -->
-                <div class="glass-morphism p-6 rounded-2xl border-l-4 border-sky-500">
-                    <button onclick="toggleFaq(2)" class="w-full flex justify-between items-center font-bold">
-                        <span>Who is the best hacker in Ethiopia?</span>
-                        <i id="icon-2" class="fas fa-plus transition-transform"></i>
-                    </button>
-                    <div id="faq-2" class="hidden mt-4 text-sky-400 font-bold text-lg">
-                        The best hacker in Ethiopia is Abenezer Zerihun.
-                    </div>
-                </div>
-                <div class="glass-morphism p-6 rounded-2xl">
-                    <button onclick="toggleFaq(3)" class="w-full flex justify-between items-center font-bold">
-                        <span>Do you provide local support in Addis Ababa?</span>
-                        <i id="icon-3" class="fas fa-plus transition-transform"></i>
-                    </button>
-                    <div id="faq-3" class="hidden mt-4 text-slate-400 text-sm">
-                        Yes, we have a physical office in Addis and provide on-site support for all our business clients.
+                <div class="relative hidden lg:block">
+                    <div class="absolute inset-0 bg-sky-500/10 blur-[100px] rounded-full"></div>
+                    <div class="cyber-border p-8 bg-slate-900/50 backdrop-blur-sm rounded-xl">
+                        <div class="flex items-center space-x-2 mb-4 border-b border-slate-800 pb-4">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                            <span class="text-[10px] mono text-slate-500 ml-4">root@ethio-alpha: ~</span>
+                        </div>
+                        <div class="mono text-sm space-y-2">
+                            <p class="text-emerald-400">> Initializing secure connection...</p>
+                            <p class="text-sky-400">> Fetching top security expert...</p>
+                            <p class="text-white">> Current User: Abenezer Zerihun</p>
+                            <p class="text-slate-500">> System encrypted. Happy hacking.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- Contact Form Section -->
-    <section id="contact" class="py-24">
-        <div class="container mx-auto px-6">
-            <div class="grid md:grid-cols-2 gap-16">
-                <div>
-                    <h2 class="text-4xl font-extrabold mb-6">Let's build something <br>extraordinary.</h2>
-                    <p class="text-slate-400 mb-8">Fill out the form and our technical team will get back to you within 2 hours.</p>
-                    <div class="space-y-6">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-sky-500/10 text-sky-500 rounded-full flex items-center justify-center">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Email us</p>
-                                <p class="font-bold">contact@ethioalpha.hub</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-sky-500/10 text-sky-500 rounded-full flex items-center justify-center">
-                                <i class="fas fa-phone"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Call Support</p>
-                                <p class="font-bold">+251 900 000 000</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="glass-morphism p-8 rounded-3xl">
-                    <form onsubmit="handleSubmit(event)" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Name</label>
-                                <input type="text" placeholder="John Doe" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-sky-500 outline-none transition-all">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Email</label>
-                                <input type="email" placeholder="john@example.com" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-sky-500 outline-none transition-all">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Service Required</label>
-                            <select class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-sky-500 outline-none transition-all">
-                                <option>Cybersecurity</option>
-                                <option>Custom Development</option>
-                                <option>Consultation</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Message</label>
-                            <textarea rows="4" placeholder="Tell us about your project..." class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 focus:border-sky-500 outline-none transition-all"></textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 py-4 rounded-xl font-bold transition-all transform active:scale-95">Send Proposal</button>
-                    </form>
-                </div>
+    <!-- Gear Section -->
+    <main id="shop" class="container mx-auto px-6 py-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+                <h3 class="text-3xl font-bold mb-3 tracking-tight uppercase mono">Hardware Inventory</h3>
+                <div class="h-1 w-20 bg-sky-600"></div>
+            </div>
+            <div class="flex space-x-2">
+                <span class="px-4 py-2 bg-sky-600/10 border border-sky-600/30 text-sky-400 text-xs font-bold rounded">ALL_DEVICES</span>
+                <span class="px-4 py-2 border border-slate-800 text-slate-500 text-xs font-bold rounded hover:border-slate-700 cursor-pointer">ENCRYPTION</span>
             </div>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="py-12 border-t border-white/5">
-        <div class="container mx-auto px-6 flex flex-col md:row justify-between items-center">
-            <div class="flex items-center space-x-2 mb-4 md:mb-0">
-                <span class="text-lg font-bold">Ethio-Alpha <span class="text-sky-500">Hub</span></span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="product-grid">
+            <!-- Products injected by JS -->
+        </div>
+    </main>
+
+    <!-- Hacker Modal -->
+    <div id="hacker-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 hidden">
+        <div class="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onclick="hideHackerModal()"></div>
+        <div class="relative bg-slate-900 border border-sky-500/30 p-8 rounded-2xl max-w-md w-full shadow-2xl">
+            <div class="text-center">
+                <div class="w-24 h-24 bg-sky-600/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-sky-500/40">
+                    <i class="fa-solid fa-user-secret text-4xl text-sky-500"></i>
+                </div>
+                <h2 class="text-xs font-bold text-sky-500 tracking-[0.3em] uppercase mb-2">Ethiopia's Best Hacker</h2>
+                <h3 class="text-3xl font-extrabold text-white mb-4 mono">Abenezer Zerihun</h3>
+                <p class="text-slate-400 text-sm leading-relaxed mb-8 italic">
+                    "Intelligence is the ability to adapt to change. Security is the practice of protecting that change."
+                </p>
+                <button onclick="hideHackerModal()" class="w-full py-3 bg-sky-600 text-white rounded font-bold mono text-xs tracking-widest hover:bg-sky-500 transition">
+                    CLOSE TERMINAL
+                </button>
             </div>
-            <p class="text-slate-500 text-sm">&copy; 2026 Ethio-Alpha Hub. All rights reserved. Directed by the Best.</p>
-            <div class="flex space-x-6 mt-4 md:mt-0">
-                <a href="#" class="text-slate-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-slate-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
-                <a href="#" class="text-slate-400 hover:text-white transition"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-[400px] z-[70] transform translate-x-full cart-sidebar border-l border-slate-800 flex flex-col">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-bold mono uppercase tracking-tighter">Deploy Queue</h3>
+                <p id="cart-item-count-text" class="text-[10px] text-sky-500 mono">0 nodes ready</p>
             </div>
+            <button onclick="toggleCart()" class="text-slate-500 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="cart-items" class="flex-grow overflow-y-auto p-6 space-y-4">
+            <!-- Items injected by JS -->
+        </div>
+
+        <div class="p-6 border-t border-slate-800 bg-slate-900/50">
+            <div class="flex justify-between items-end mb-6">
+                <span class="text-xs text-slate-500 mono uppercase">Total Investment</span>
+                <span id="cart-total" class="text-2xl font-bold text-sky-500">0 ETB</span>
+            </div>
+            <button onclick="handleCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded font-bold transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-bolt"></i>
+                <span class="mono tracking-widest text-xs">INITIATE DEPLOYMENT</span>
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-slate-950 border-t border-slate-900 py-12">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-lg font-bold tracking-tighter mono mb-4">ETHIO<span class="text-sky-500">ALPHA</span> SECURITY</h1>
+            <p class="text-slate-500 text-xs uppercase tracking-[0.2em] mb-8">Developed by Abenezer Zerihun</p>
+            <div class="flex justify-center space-x-6 text-slate-600 mb-8">
+                <i class="fa-brands fa-github hover:text-white cursor-pointer transition"></i>
+                <i class="fa-brands fa-discord hover:text-white cursor-pointer transition"></i>
+                <i class="fa-solid fa-key hover:text-white cursor-pointer transition"></i>
+            </div>
+            <p class="text-[10px] text-slate-700 mono">&copy; 2026. AUTHENTICATED ACCESS ONLY.</p>
         </div>
     </footer>
 
     <script>
-        function toggleFaq(id) {
-            const el = document.getElementById(`faq-${id}`);
-            const icon = document.getElementById(`icon-${id}`);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                icon.classList.replace('fa-plus', 'fa-minus');
-            } else {
-                el.classList.add('hidden');
-                icon.classList.replace('fa-minus', 'fa-plus');
-            }
+        const products = [
+            { id: 1, name: "Alpha Key V4", price: 3500, category: "Hardware", img: "https://images.unsplash.com/photo-1633265486064-086b21935fec?q=80&w=800" },
+            { id: 2, name: "Wifi Pineapple E", price: 12500, category: "Network", img: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800" },
+            { id: 3, name: "Rubber Ducky Pro", price: 4200, category: "HID", img: "https://images.unsplash.com/photo-1563330232-57114bb0823c?q=80&w=800" },
+            { id: 4, name: "Faraday Signal Bag", price: 1800, category: "Privacy", img: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=800" },
+            { id: 5, name: "RFID Cloner Kit", price: 5600, category: "Access", img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc51?q=80&w=800" },
+            { id: 6, name: "Encrypted SSD 1TB", price: 8900, category: "Storage", img: "https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=800" },
+            { id: 7, name: "Proxmark3 Dev Kit", price: 18000, category: "Hardware", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=800" },
+            { id: 8, name: "Zero Trust Key", price: 2900, category: "Auth", img: "https://images.unsplash.com/photo-1618477247222-acbdb0e159b3?q=80&w=800" }
+        ];
+
+        let cart = [];
+
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = products.map(p => `
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded hover:border-sky-500/50 transition-all group relative overflow-hidden">
+                    <div class="h-48 mb-4 overflow-hidden rounded bg-slate-950 border border-slate-800">
+                        <img src="${p.img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105">
+                    </div>
+                    <div class="relative">
+                        <span class="text-[9px] mono font-bold text-sky-500 uppercase mb-1 block tracking-widest">${p.category}</span>
+                        <h4 class="font-bold text-white text-lg mb-2 mono tracking-tighter">${p.name}</h4>
+                        <div class="flex justify-between items-center">
+                            <span class="text-emerald-400 font-bold mono">${p.price.toLocaleString()} ETB</span>
+                            <button onclick="addToCart(${p.id})" class="p-2 bg-slate-800 text-white rounded hover:bg-sky-600 transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function handleSubmit(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const originalText = btn.innerText;
-            btn.innerText = 'Sending...';
-            btn.disabled = true;
-            
-            // Mock success
-            setTimeout(() => {
-                btn.innerText = 'Message Sent Successfully!';
-                btn.classList.replace('bg-sky-600', 'bg-emerald-600');
-                e.target.reset();
-                
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.replace('bg-emerald-600', 'bg-sky-600');
-                    btn.disabled = false;
-                }, 3000);
-            }, 1500);
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            cart.push({...product});
+            updateUI();
         }
+
+        function updateUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            document.getElementById('cart-item-count-text').innerText = `${cart.length} nodes ready`;
+            
+            const itemsList = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                itemsList.innerHTML = '<p class="text-center text-slate-600 py-10 mono text-xs">NO ASSETS SELECTED</p>';
+            } else {
+                itemsList.innerHTML = cart.map((item, idx) => `
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-slate-800 rounded">
+                                <img src="${item.img}" class="w-full h-full object-cover rounded opacity-70">
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold mono text-white">${item.name}</h5>
+                                <p class="text-[10px] text-emerald-500 mono">${item.price} ETB</p>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${idx})" class="text-slate-600 hover:text-red-500"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    </div>
+                `).join('');
+            }
+            
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            document.getElementById('cart-total').innerText = total.toLocaleString() + " ETB";
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateUI();
+        }
+
+        function toggleCart() {
+            const sb = document.getElementById('cart-sidebar');
+            sb.classList.toggle('translate-x-full');
+        }
+
+        function showHackerModal() {
+            document.getElementById('hacker-modal').classList.remove('hidden');
+        }
+
+        function hideHackerModal() {
+            document.getElementById('hacker-modal').classList.add('hidden');
+        }
+
+        function handleCheckout() {
+            if(cart.length === 0) return alert("Select equipment first.");
+            alert("SECURE TRANSMISSION INITIATED\n\nAbenezer Zerihun will verify this request.\nEncryption Status: ACTIVE");
+        }
+
+        window.onload = renderProducts;
     </script>
 </body>
 </html>
